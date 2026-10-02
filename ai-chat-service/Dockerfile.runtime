@@ -1,0 +1,9 @@
+FROM alpine:3.18
+RUN apk add --no-cache ca-certificates
+COPY grpc_health_probe-linux-amd64 /usr/bin/grpc_health_probe
+RUN chmod +x /usr/bin/grpc_health_probe
+WORKDIR /app
+COPY ai-chat-service ./
+COPY dev.config.yaml /app/config.yaml
+ENTRYPOINT ["./ai-chat-service"]
+CMD ["--config=config.yaml"]

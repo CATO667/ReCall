@@ -1,0 +1,21 @@
+http:
+  ip: 0.0.0.0
+  port: 7080
+log:
+  level: "info"
+  logPath: "runtime/logs/app.log"
+chat:
+  model: "deepseek-v4-flash"
+  max_tokens: 32768
+  temperature: 0.8
+  top_p: 0.9
+  presence_penalty: 0.8
+  frequency_penalty: 0.5
+  bot_desc: "你是一个AI助手，我需要你模拟一名资深的软件工程师来回答我的问题"
+  min_response_tokens: 2048
+  context_ttl: 1800
+  context_len: 4
+dependOn:
+  ai-chat-service:
+    address: "localhost:50055"
+    accessToken: "dev-local-access-token"

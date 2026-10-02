@@ -1,0 +1,53 @@
+server:
+  ip: 0.0.0.0
+  port: 50057
+  accessToken: "${ACCESS_TOKEN}"
+log:
+  level: "info"
+  logPath: "runtime/logs/vecfluxapi.log"
+chat:
+  api_key: "${DEEPSEEK_API_KEY}"
+  base_url: "https://api.deepseek.com/v1"
+  model: "deepseek-v4-flash"
+  max_tokens: 32768
+  temperature: 0.8
+  top_p: 0.9
+  presence_penalty: 0.8
+  frequency_penalty: 0.5
+  bot_desc: "你是一个AI助手，我需要你模拟一名资深的软件工程师来回答我的问题"
+  min_response_tokens: 2048
+  context_ttl: 1800
+  context_len: 4
+  qa_cache_ttl: 0
+kvstore:
+  write_host: "${KV_WRITE_HOST}"
+  read_host: "${KV_READ_HOST}"
+  port: ${KV_PORT}
+  read_port: ${KV_READ_PORT}
+  prefix: "ai_chat_service_"
+embedder:
+  provider: "openai_compat"
+  api_key: "ollama"
+  base_url: "http://ollama:11434/v1"
+  model: "${OLLAMA_MODEL}"
+vector:
+  enabled: true
+  provider: "kvstore"
+  collection: "ai_chat_qa"
+  index_type: "hnsw"
+  vector_dim: 1024
+  recall_top_k: 20
+  similarity_threshold: 0.4
+  cache_similarity_threshold: 0.65
+  qa_score_boost: 0.05
+  topic_similarity_threshold: 0.82
+  orchestration_v2: true
+  top_k: 3
+rerank:
+  enabled: true
+  weight_vector: 0.75
+  weight_lexical: 0.20
+  weight_topic: 0.05
+dependOn:
+  tokenizer:
+    address: "http://tokenizer:3002"

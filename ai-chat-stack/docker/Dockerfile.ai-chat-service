@@ -1,0 +1,23 @@
+FROM golang:1.22-bookworm AS builder
+
+ENV GOPROXY=https://goproxy.cn,direct
+WORKDIR /src/ai-chat-service
+COPY ai-chat-service/go.mod ai-chat-service/go.sum ./
+RUN go mod download
+COPY ai-chat-service/ .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/ai-chat-service ./chat-server
+
+FROM debian:bookworm-slim AS runtime
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && wget -qO /usr/local/bin/grpc_health_probe \
+       https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.34/grpc_health_probe-linux-amd64 \
+    && chmod +x /usr/local/bin/grpc_health_probe
+
+WORKDIR /app
+COPY --from=builder /out/ai-chat-service ./ai-chat-service
+
+ENTRYPOINT ["./ai-chat-service"]
+CMD ["--config=/app/config.yaml"]

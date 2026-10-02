@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+option go_package = "ai-chat-service/vecfluxapi/proto";
+
+package vecfluxapi.v1;
+
+service VecFluxAPI {
+  rpc VSet(VSetRequest) returns (VSetResponse);
+  rpc VGet(VGetRequest) returns (stream VGetChunk);
+}
+
+message VSetRequest {
+  string question = 1;
+  string answer = 2;
+  QAMeta meta = 3;
+}
+
+message QAMeta {
+  string source = 1;
+  string topic_id = 2;
+  int32 prompt_tokens = 3;
+  int32 completion_tokens = 4;
+}
+
+message VSetResponse {
+  string qa_key = 1;
+  bool ok = 2;
+}
+
+message VGetRequest {
+  string question = 1;
+  repeated ChatMessage context = 2;
+  LLMOptions llm = 3;
+}
+
+message ChatMessage {
+  string role = 1;
+  string content = 2;
+}
+
+message LLMOptions {
+  string model = 1;
+  int32 max_tokens = 2;
+  float temperature = 3;
+  float top_p = 4;
+  float presence_penalty = 5;
+  float frequency_penalty = 6;
+  string bot_desc = 7;
+  int32 min_response_tokens = 8;
+}
+
+enum ResponseSource {
+  SOURCE_UNSPECIFIED = 0;
+  SOURCE_CACHE = 1;
+  SOURCE_RAG_LLM = 2;
+  SOURCE_PURE_LLM = 3;
+}
+
+message RAGRef {
+  string question = 1;
+  string answer = 2;
+  float score = 3;
+}
+
+message Usage {
+  int32 prompt_tokens = 1;
+  int32 completion_tokens = 2;
+  int32 total_tokens = 3;
+}
+
+message VGetChunk {
+  string request_id = 1;
+  ResponseSource source = 2;
+  string delta = 3;
+  string finish_reason = 4;
+  Usage usage = 5;
+  int32 tokens_saved = 6;
+  repeated RAGRef refs = 7;
+  bool done = 8;
+}

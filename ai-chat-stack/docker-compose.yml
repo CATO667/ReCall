@@ -1,0 +1,135 @@
+# ReCallRag Docker 应用栈（VecFluxkv 主/从均在容器外，需自行 ./bin/kvstore 启动）
+# 启动: 先起 VecFluxkv → bash scripts/docker-up.sh
+name: ai-chat-stack
+
+x-app-depends: &app_depends
+  ollama:
+    condition: service_healthy
+  tokenizer:
+    condition: service_started
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai-chat-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  tokenizer:
+    build:
+      context: ../tokenizer
+      dockerfile: Dockerfile
+    container_name: ai-chat-tokenizer
+    restart: unless-stopped
+    environment:
+      PORT: "3002"
+
+  sensitive:
+    build:
+      context: ..
+      dockerfile: ai-chat-stack/docker/Dockerfile.keywords-filter
+    container_name: ai-chat-sensitive
+    restart: unless-stopped
+    volumes:
+      - ./runtime/docker/configs/sensitive.yaml:/app/config.yaml:ro
+      - ./configs/sensitive-dict.txt:/app/dict.txt:ro
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+      start_period: 5s
+
+  keywords:
+    build:
+      context: ..
+      dockerfile: ai-chat-stack/docker/Dockerfile.keywords-filter
+    container_name: ai-chat-keywords
+    restart: unless-stopped
+    volumes:
+      - ./runtime/docker/configs/keywords.yaml:/app/config.yaml:ro
+      - ./configs/keywords-dict.txt:/app/dict.txt:ro
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+      start_period: 5s
+
+  vecfluxapi:
+    build:
+      context: ..
+      dockerfile: ai-chat-stack/docker/Dockerfile.vecfluxapi
+    container_name: ai-chat-vecfluxapi
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./runtime/docker/configs/vecfluxapi.yaml:/app/config.yaml:ro
+    depends_on:
+      <<: *app_depends
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50057"]
+      interval: 5s
+      timeout: 2s
+      retries: 8
+      start_period: 10s
+
+  ai-chat-service:
+    build:
+      context: ..
+      dockerfile: ai-chat-stack/docker/Dockerfile.ai-chat-service
+    container_name: ai-chat-service
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./runtime/docker/configs/ai-chat-service.yaml:/app/config.yaml:ro
+    depends_on:
+      <<: *app_depends
+      sensitive:
+        condition: service_healthy
+      keywords:
+        condition: service_healthy
+      vecfluxapi:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "grpc_health_probe", "-addr=:50051"]
+      interval: 5s
+      timeout: 2s
+      retries: 8
+      start_period: 10s
+
+  ai-chat-backend:
+    build:
+      context: ..
+      dockerfile: ai-chat-stack/docker/Dockerfile.ai-chat-backend
+    container_name: ai-chat-backend
+    restart: unless-stopped
+    ports:
+      - "7080:80"
+    volumes:
+      - ./runtime/docker/configs/ai-chat-backend.yaml:/app/config.yaml:ro
+    depends_on:
+      ai-chat-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1/api/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  ollama-data:

@@ -1,0 +1,69 @@
+server:
+  ip: 0.0.0.0
+  port: 50055
+  accessToken: "dev-local-access-token"
+log:
+  level: "info"
+  logPath: "runtime/logs/app.log"
+chat:
+  api_key: "YOUR_DEEPSEEK_API_KEY"
+  base_url: "https://api.deepseek.com/v1"
+  model: "deepseek-v4-flash"
+  max_tokens: 32768
+  temperature: 0.8
+  top_p: 0.9
+  presence_penalty: 0.8
+  frequency_penalty: 0.5
+  bot_desc: "你是一个AI助手，我需要你模拟一名资深的软件工程师来回答我的问题"
+  min_response_tokens: 2048
+  context_ttl: 1800
+  context_len: 4
+  qa_cache_ttl: 0
+kvstore:
+  write_host: "127.0.0.1"
+  read_host: "127.0.0.1"
+  port: 2000
+  read_port: 2000
+  prefix: "ai_chat_service_"
+embedder:
+  # 本地 Ollama: openai_compat + http://127.0.0.1:11434/v1 + bge-m3
+  # 远程 SiliconFlow: siliconflow + https://api.siliconflow.cn/v1 + BAAI/bge-m3
+  provider: "openai_compat"
+  api_key: "ollama"
+  base_url: "http://127.0.0.1:11434/v1"
+  model: "bge-m3"
+vector:
+  enabled: true
+  provider: "kvstore"
+  collection: "ai_chat_qa"
+  index_type: "hnsw"
+  vector_dim: 1024
+  recall_top_k: 20
+  # v2 编排：>=0.65 语义缓存直返（需语言一致）；0.4~0.65 RAG 增强；<0.4 纯大模型
+  similarity_threshold: 0.4
+  cache_similarity_threshold: 0.65
+  qa_score_boost: 0.05
+  topic_similarity_threshold: 0.82
+  orchestration_v2: true
+  top_k: 3
+rerank:
+  enabled: true
+  weight_vector: 0.75
+  weight_lexical: 0.20
+  weight_topic: 0.05
+kbase:
+  enabled: false
+  http_api_enabled: true
+  http_api_port: 50056
+dependOn:
+  sensitive:
+    address: "localhost:50053"
+    accessToken: "dev-local-access-token"
+  keywords:
+    address: "localhost:50054"
+    accessToken: "dev-local-access-token"
+  tokenizer:
+    address: "http://127.0.0.1:3002"
+  vecfluxapi:
+    address: "localhost:50057"
+    accessToken: "dev-local-access-token"

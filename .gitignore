@@ -1,0 +1,43 @@
+.idea/
+
+# 本地开发配置（含 API Key / accessToken，勿提交；模板见 *.yaml.example）
+**/dev.config.yaml
+**/dev.*.config.yaml
+**/*.dev.config.yaml
+**/vecfluxapi.dev.config.yaml
+!**/*.yaml.example
+!**/*.config.yaml.example
+
+# Docker Stack 配置（与 dev 同源密钥，本地维护；模板见 configs/*.yaml.example）
+ai-chat-stack/configs/ai-chat-service.yaml
+ai-chat-stack/configs/ai-chat-backend.yaml
+ai-chat-stack/configs/sensitive.yaml
+ai-chat-stack/configs/keywords.yaml
+
+# 环境变量
+.env
+.env.*
+!.env.example
+
+# 运行时 / 日志 / PID
+**/runtime/
+ai-chat-stack/runtime/
+*.log
+
+# 编译产物
+ai-chat-backend/ai-chat-backend
+ai-chat-service/ai-chat-service
+
+# 前端依赖与构建产物
+ai-chat-web/node_modules/
+ai-chat-web/dist/
+
+# Python
+tokenizer/.venv/
+__pycache__/
+*.pyc
+
+# OS / IDE
+.vscode/
+.DS_Store
+Thumbs.db
