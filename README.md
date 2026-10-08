@@ -1,8 +1,8 @@
 # ReCallRagService
 
-基于 **vec-fluxkv** 的 RAG 对话服务：历史 QA 缓存 + 语义检索 + rerank + LLM；命中缓存时跳过 LLM，节省 Token。
+基于 **vec-fluxdb** 的 RAG 对话服务：历史 QA 缓存 + 语义检索 + rerank + LLM；命中缓存时跳过 LLM，节省 Token。
 
-存储与向量统一走 **vec-fluxkv**（正文 / meta / HNSW），不再依赖 MySQL 或其它向量库。
+存储与向量统一走 **vec-fluxdb**（正文 / meta / HNSW），不再依赖 MySQL 或其它向量库。
 
 ---
 
@@ -80,7 +80,7 @@ cmake -S . -B build && cmake --build build
 ./bin/kvstore -c config/kv.conf
 ```
 
-详情见 VecFluxkv 项目 README。
+详情见 VecFluxdb项目 README。
 
 ### 3. 启动应用栈
 
