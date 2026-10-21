@@ -2,7 +2,7 @@
 
 基于 **vec-fluxdb** 的 RAG 对话服务：历史 QA 缓存 + 语义检索 + rerank + LLM；命中缓存时跳过 LLM，节省 Token。
 
-存储与向量统一走 **vec-fluxdb**（正文 / meta / HNSW），不再依赖 MySQL 或其它向量库。
+存储与向量统一走 vec-fluxdb（正文 / meta / HNSW）。
 
 ---
 
@@ -25,10 +25,10 @@ ai-chat-service (:50055)
                               └─ LLM    ──► DeepSeek 等 OpenAI 兼容 API
 ```
 
-**一次提问（简化）**
+**一次提问**
 
 1. 敏感词检查  
-2. **精确 QA 命中**（相同问题）→ 读 KV 直返，**跳过 Embed / LLM**  
+2.精确 QA 命中→ 读 KV 直返，
 3. 否则 Embed + VSEARCH + rerank → 分数 ≥ 0.65 → **语义缓存直返**  
 4. 否则拼 RAG 上下文 → LLM 流式生成  
 5. 异步写入 QA（KV + 向量索引）
@@ -44,7 +44,6 @@ ai-chat-service (:50055)
 | 精确 QA 缓存 | 相同问题 KV 直返 |
 | 语义 QA 缓存 | 相似问题向量检索 + rerank 后直返 |
 | 软 RAG | 中等相似度历史 QA 拼 Prompt |
-| 知识库检索 | 文档切分入库 + 混合检索，数据落在 vec-fluxkv |
 | 敏感词过滤 | 独立 gRPC 服务 |
 | 流式对话 | LLM token 级流式；缓存命中整包分片返回 |
 
@@ -66,9 +65,9 @@ cp .env.example .env          # 填入 DEEPSEEK_API_KEY
 | 变量 | 说明 |
 |------|------|
 | `DEEPSEEK_API_KEY` | LLM API Key（必填） |
-| `ACCESS_TOKEN` | 各 gRPC 服务共用 token（默认即可） |
-| `KV_WRITE_HOST` / `KV_READ_HOST` | 容器访问宿主机 KV，默认 `host.docker.internal` |
-| `OLLAMA_MODEL` | Embedding 模型，默认 `bge-m3` |
+| `ACCESS_TOKEN` | 各 gRPC 服务共用 token） |
+| `KV_WRITE_HOST` / `KV_READ_HOST` | 
+| `OLLAMA_MODEL` | Embedding 模型|
 
 ### 2. 启动 VecFluxkv（宿主机）
 
@@ -132,25 +131,11 @@ bash scripts/docker-up.sh
 
 ---
 
-## 知识库入库
 
-应用栈与 VecFluxkv 就绪后：
 
-```bash
-bash ai-chat-stack/scripts/ingest-kbase.sh
+## 本地 Go 开发
 
-cd ai-chat-service
-go run ./chat-server/cmd/ingest-doc --config=dev.config.yaml --file=path/to/doc.md
-go run ./chat-server/cmd/ingest-doc --config=dev.config.yaml --list
-```
 
-入库前需有本地 `ai-chat-service/dev.config.yaml`（可从 example 复制，并保证 `kvstore` 指向可达的 VecFluxkv）。
-
----
-
-## 本地 Go 开发（可选）
-
-改后端代码、不想每次 Docker build 时，可用 Go 直跑（仍须宿主机 VecFluxkv + Ollama）：
 
 ```bash
 bash ai-chat-stack/scripts/setup-local-config.sh
